@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valens Scrabbletine</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Georgia, "Times New Roman", serif;
+      background: #ffb6c1;
+      color: #8b0000;
+    }
+    h1 {
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-weight: 600;
+      text-align: center;
+      margin: 0 1rem 2rem;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+      color: #8b0000;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 2rem;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(180deg, #dc143c 0%, #b22222 100%);
+      border: 2px solid #8b0000;
+      border-radius: 2rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(139, 0, 0, 0.4);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+    .landing {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .landing.hidden {
+      display: none;
+    }
+    .board-container {
+      display: none;
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1rem;
+    }
+    .board-container.visible {
+      display: flex;
+    }
+    .scoreboard {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 8px;
+      border: 2px solid #8b0000;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #8b0000;
+      box-shadow: 0 4px 12px rgba(139, 0, 0, 0.15);
+    }
+    .scoreboard .score {
+      font-size: 1.5rem;
+      min-width: 4ch;
+      text-align: center;
+    }
+    .game-sidebar {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+      min-width: 280px;
+      max-width: 360px;
+    }
+    .chat-window {
+      flex: 1 1 auto;
+      min-height: 160px;
+      max-height: 320px;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 8px;
+      border: 2px solid #8b0000;
+      overflow-y: auto;
+      font-size: 0.95rem;
+      color: #333;
+      box-shadow: 0 4px 12px rgba(139, 0, 0, 0.15);
+    }
+    .chat-message {
+      margin-bottom: 0.75rem;
+    }
+    .chat-message:last-child {
+      margin-bottom: 0;
+    }
+    .chat-message .sender {
+      font-weight: 700;
+      color: #8b0000;
+      margin-bottom: 0.25rem;
+    }
+    .chat-message .text {
+      line-height: 1.4;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+    .btn-continue {
+      align-self: center;
+    }
+    .btn-play-myself {
+      background: linear-gradient(180deg, #8a8a8a 0%, #6a6a6a 100%);
+      color: #e0e0e0;
+      border: 2px solid #5a5a5a;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .btn-play-myself:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .btn-play-myself.hidden {
+      display: none;
+    }
+    .your-letters {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 200px;
+    }
+    .your-letters h2 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #8b0000;
+    }
+    .letter-tiles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+    }
+    .letter-tile {
+      width: 44px;
+      height: 52px;
+      background: linear-gradient(180deg, #f5f0e6 0%, #e8e0d0 100%);
+      border: 1px solid #b8a88a;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #333;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(15, 1fr);
+      grid-template-rows: repeat(15, 1fr);
+      gap: 2px;
+      width: min(90vmin, 840px);
+      height: min(90vmin, 840px);
+      background: #0d4d2b;
+      padding: 6px;
+      border-radius: 4px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    .cell {
+      aspect-ratio: 1;
+      background: #c9b896;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(0.4rem, 2.2vmin, 0.7rem);
+      font-weight: 700;
+      color: #333;
+      text-transform: uppercase;
+    }
+    .cell.tw { background: #c41e3a; color: #fff; }
+    .cell.dw { background: #e8a0a8; color: #8b0000; }
+    .cell.tl { background: #4a7ba7; color: #fff; }
+    .cell.dl { background: #87bdd8; color: #1a3a4a; }
+    .cell.star { background: #e8a0a8; color: #8b0000; }
+    .cell.star::after { content: "★"; font-size: 1.4em; color: #8b0000; }
+    .cell.played { background: #e8e0d0; color: #1a1a1a; font-size: clamp(0.5rem, 2.8vmin, 0.9rem); }
+    .cell.played::after { content: none; }
+  </style>
+</head>
+<body>
+  <main class="landing" id="landing">
+    <h1>Play Scrabble with Pratyusha!</h1>
+    <button type="button" class="btn" id="go-btn">Let's go!</button>
+  </main>
+  <section class="board-container" id="board-container">
+    <div class="your-letters">
+      <h2>Your Letters</h2>
+      <div class="letter-tiles" id="letter-tiles">
+        <span class="letter-tile">Q</span>
+        <span class="letter-tile">U</span>
+        <span class="letter-tile">E</span>
+        <span class="letter-tile">E</span>
+        <span class="letter-tile">N</span>
+        <span class="letter-tile">Y</span>
+      </div>
+    </div>
+    <div class="board" id="board"></div>
+    <div class="game-sidebar">
+      <div class="chat-window" id="chat-window">
+        <div class="chat-message">
+          <div class="sender">ScrabbleJudge</div>
+          <div class="text">Welcome to Scrabble! Pratyusha has won the coin toss, and will play first once you start the game.</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-play-myself hidden" id="play-myself-btn">Play Turn Myself</button>
+        <button type="button" class="btn btn-continue" id="continue-btn">Start Game</button>
+      </div>
+      <div class="scoreboard">
+        <span class="name">Elijah</span>
+        <span class="score" id="score">0 – 0</span>
+        <span class="name">Pratyusha</span>
+      </div>
+    </div>
+  </section>
+  <script>
+    (function() {
+      var TW = [[0,0],[0,7],[0,14],[7,0],[7,14],[14,0],[14,7],[14,14]];
+      var DW = [[1,1],[2,2],[3,3],[4,4],[10,4],[11,3],[12,2],[13,1],[7,7],[4,10],[3,11],[2,12],[1,13],[10,10],[11,11],[12,12],[13,13],[13,1]];
+      var TL = [[1,5],[1,9],[5,1],[5,5],[5,9],[5,13],[9,1],[9,5],[9,9],[9,13],[13,5],[13,9]];
+      var DL = [[0,3],[0,11],[2,6],[2,8],[3,0],[3,7],[3,14],[6,2],[6,6],[6,8],[6,12],[7,3],[7,11],[8,2],[8,6],[8,8],[8,12],[11,0],[11,7],[11,14],[12,6],[12,8],[14,3],[14,11]];
+      function key(r, c) { return r + "," + c; }
+      var set = {};
+      TW.forEach(function(p) { set[key(p[0], p[1])] = "tw"; });
+      DW.forEach(function(p) { set[key(p[0], p[1])] = "dw"; });
+      TL.forEach(function(p) { set[key(p[0], p[1])] = "tl"; });
+      DL.forEach(function(p) { set[key(p[0], p[1])] = "dl"; });
+      set["7,7"] = "star";
+      var board = document.getElementById("board");
+      for (var r = 0; r < 15; r++) {
+        for (var c = 0; c < 15; c++) {
+          var cell = document.createElement("div");
+          cell.className = "cell " + (set[key(r, c)] || "");
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          var label = set[key(r, c)];
+          if (label === "tw") cell.textContent = "TW";
+          else if (label === "dw") cell.textContent = "DW";
+          else if (label === "tl") cell.textContent = "TL";
+          else if (label === "dl") cell.textContent = "DL";
+          board.appendChild(cell);
+        }
+      }
+      function getCell(r, c) {
+        return board.children[r * 15 + c];
+      }
+      function placeLetter(r, c, letter) {
+        var cell = getCell(r, c);
+        cell.className = "cell played";
+        cell.textContent = letter;
+      }
+      document.getElementById("go-btn").onclick = function() {
+        document.getElementById("landing").classList.add("hidden");
+        document.getElementById("board-container").classList.add("visible");
+      };
+      var elijahScore = 0;
+      var pratyushaScore = 0;
+      var gameStarted = false;
+      var playMyselfClickCount = 0;
+      var recommendationVerb = "take";
+      var recommendationPhase = null;
+      var continuePhase = null;
+      function updateScoreDisplay() {
+        document.getElementById("score").textContent = elijahScore + " – " + pratyushaScore;
+      }
+      function addChatMessage(sender, text) {
+        var chatWindow = document.getElementById("chat-window");
+        var msg = document.createElement("div");
+        msg.className = "chat-message";
+        msg.innerHTML = "<div class=\"sender\">" + sender + "</div><div class=\"text\">" + text + "</div>";
+        chatWindow.appendChild(msg);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      }
+      document.getElementById("play-myself-btn").onclick = function() {
+        playMyselfClickCount += 1;
+        var pleaseCount = Math.ceil(playMyselfClickCount / 2);
+        var smileyCount = Math.ceil((playMyselfClickCount + 1) / 2);
+        var please = "";
+        for (var i = 0; i < pleaseCount; i++) please += "please ";
+        var smileys = "";
+        for (var j = 0; j < smileyCount; j++) smileys += " :)";
+        addChatMessage("ScrabbleBot", please + recommendationVerb + " my recommendation" + smileys);
+      };
+      document.getElementById("continue-btn").onclick = function() {
+        var btn = document.getElementById("continue-btn");
+        if (btn.textContent === "Be Mine") {
+          document.body.style.display = "flex";
+          document.body.style.alignItems = "center";
+          document.body.style.justifyContent = "center";
+          document.body.style.minHeight = "100vh";
+          document.body.style.margin = "0";
+          document.body.style.background = "#ffb6c1";
+          document.body.innerHTML = "<img src=\"resources/snoopy-valentine.jpg\" alt=\"Be Mine\" style=\"max-width:100%;max-height:100vh;object-fit:contain;\" />";
+          return;
+        }
+        if (!gameStarted) {
+          placeLetter(7, 5, "W");
+          placeLetter(7, 6, "I");
+          placeLetter(7, 7, "L");
+          placeLetter(7, 8, "L");
+          pratyushaScore = 4;
+          updateScoreDisplay();
+          addChatMessage("ScrabbleJudge", "Pratyusha played WILL. Now it's your turn.");
+          btn.textContent = "Play My Turn";
+          gameStarted = true;
+        } else if (btn.textContent === "Play My Turn") {
+          addChatMessage("ScrabbleBot", "Hello! I am ScrabbleBot, and I am here to recommend words to play to help you beat Pratyusha! I recommend you play \"QUEENLY\" and take advantage of the two DL squares.");
+          btn.textContent = "Accept ScrabbleBot's Recommendation";
+          recommendationPhase = "QUEENLY";
+          var playMyselfBtn = document.getElementById("play-myself-btn");
+          playMyselfBtn.classList.remove("hidden");
+        } else if (btn.textContent === "Accept ScrabbleBot's Recommendation") {
+          if (recommendationPhase === "QUEENLY") {
+            placeLetter(2, 8, "Q");
+            placeLetter(3, 8, "U");
+            placeLetter(4, 8, "E");
+            placeLetter(5, 8, "E");
+            placeLetter(6, 8, "N");
+            placeLetter(8, 8, "Y");
+            elijahScore += 24;
+            updateScoreDisplay();
+            var letters = ["O", "O", "Z", "Y", "C", "X"];
+            var tilesEl = document.getElementById("letter-tiles");
+            tilesEl.innerHTML = "";
+            letters.forEach(function(letter) {
+              var span = document.createElement("span");
+              span.className = "letter-tile";
+              span.textContent = letter;
+              tilesEl.appendChild(span);
+            });
+            addChatMessage("ScrabbleJudge", "Excellent play! Let's continue with Pratyusha's next turn.");
+            document.getElementById("play-myself-btn").classList.add("hidden");
+            btn.textContent = "Continue";
+            recommendationPhase = null;
+            continuePhase = "afterQUEENLY";
+          } else if (recommendationPhase === "WOOZY") {
+            placeLetter(8, 5, "O");
+            placeLetter(9, 5, "O");
+            placeLetter(10, 5, "Z");
+            placeLetter(11, 5, "Y");
+            elijahScore = 46;
+            updateScoreDisplay();
+            var tilesEl = document.getElementById("letter-tiles");
+            tilesEl.innerHTML = "";
+            ["C", "X"].forEach(function(letter) {
+              var span = document.createElement("span");
+              span.className = "letter-tile";
+              span.textContent = letter;
+              tilesEl.appendChild(span);
+            });
+            addChatMessage("ScrabbleJudge", "Excellent play! Let's continue with Pratyusha's next turn.");
+            document.getElementById("play-myself-btn").classList.add("hidden");
+            btn.textContent = "Continue";
+            recommendationPhase = null;
+            continuePhase = "afterWOOZY";
+          } else if (recommendationPhase === "TUXEDO") {
+            placeLetter(7, 10, "T");
+            placeLetter(9, 10, "X");
+            placeLetter(10, 10, "E");
+            placeLetter(11, 10, "D");
+            placeLetter(12, 10, "O");
+            elijahScore = 74;
+            updateScoreDisplay();
+            document.getElementById("letter-tiles").innerHTML = "";
+            addChatMessage("ScrabbleJudge", "Excellent play! Let's continue with Pratyusha's next turn.");
+            document.getElementById("play-myself-btn").classList.add("hidden");
+            btn.textContent = "Continue";
+            recommendationPhase = null;
+            continuePhase = "afterTUXEDO";
+          }
+          else if (recommendationPhase === "CROWNED") {
+            placeLetter(12, 8, "C");
+            placeLetter(12, 9, "R");
+            placeLetter(12, 11, "W");
+            placeLetter(12, 12, "N");
+            placeLetter(12, 13, "E");
+            placeLetter(12, 14, "D");
+            elijahScore = 110;
+            updateScoreDisplay();
+            document.getElementById("letter-tiles").innerHTML = "";
+            addChatMessage("ScrabbleJudge", "Excellent play! Let's continue with Pratyusha's next turn.");
+            document.getElementById("play-myself-btn").classList.add("hidden");
+            btn.textContent = "Continue";
+            recommendationPhase = null;
+            continuePhase = "afterCROWNED";
+          }
+        } else if (btn.textContent === "Continue") {
+          if (continuePhase === "afterTUXEDO") {
+            placeLetter(11, 4, "M");
+            var tilesEl = document.getElementById("letter-tiles");
+            tilesEl.innerHTML = "";
+            ["C", "R", "W", "N", "E", "D", "A"].forEach(function(letter) {
+              var span = document.createElement("span");
+              span.className = "letter-tile";
+              span.textContent = letter;
+              tilesEl.appendChild(span);
+            });
+            pratyushaScore = 22;
+            updateScoreDisplay();
+            addChatMessage("ScrabbleJudge", "Pratyusha played MY. Now it's your turn.");
+            addChatMessage("ScrabbleBot", "I recommend you play CROWNED off TUXEDO and take advantage of the DL and DW square.");
+            playMyselfClickCount = 0;
+            recommendationVerb = "accept";
+            recommendationPhase = "CROWNED";
+            document.getElementById("play-myself-btn").classList.remove("hidden");
+            btn.textContent = "Accept ScrabbleBot's Recommendation";
+            continuePhase = null;
+          } else if (continuePhase === "afterWOOZY") {
+            placeLetter(5, 7, "B");
+            placeLetter(5, 8, "E");
+            var tilesEl = document.getElementById("letter-tiles");
+            tilesEl.innerHTML = "";
+            ["T", "E", "D", "O", "X", "B"].forEach(function(letter) {
+              var span = document.createElement("span");
+              span.className = "letter-tile";
+              span.textContent = letter;
+              tilesEl.appendChild(span);
+            });
+            pratyushaScore = 14;
+            updateScoreDisplay();
+            addChatMessage("ScrabbleJudge", "Pratyusha played BE. Now it's your turn.");
+            addChatMessage("ScrabbleBot", "I recommend you play TUXEDO off YOU and take advantage of the DW square.");
+            playMyselfClickCount = 0;
+            recommendationVerb = "accept";
+            recommendationPhase = "TUXEDO";
+            document.getElementById("play-myself-btn").classList.remove("hidden");
+            btn.textContent = "Accept ScrabbleBot's Recommendation";
+            continuePhase = null;
+          } else if (continuePhase === "afterCROWNED") {
+            placeLetter(5, 12, "V");
+            placeLetter(6, 12, "A");
+            placeLetter(7, 12, "L");
+            placeLetter(8, 12, "E");
+            placeLetter(9, 12, "N");
+            placeLetter(10, 12, "T");
+            placeLetter(11, 12, "I");
+            placeLetter(13, 12, "E");
+            var tilesEl = document.getElementById("letter-tiles");
+            tilesEl.innerHTML = "";
+            ["L", "O", "V", "E", "Y", "O", "U"].forEach(function(letter) {
+              var span = document.createElement("span");
+              span.className = "letter-tile";
+              span.textContent = letter;
+              tilesEl.appendChild(span);
+            });
+            pratyushaScore = '∞';
+            elijahScore = '∞';
+            updateScoreDisplay();
+            addChatMessage("ScrabbleJudge", "Pratyusha played VALENTINE.");
+            addChatMessage("Pratyusha", "Dear Elijah, I love you so much. Happy Valentine's Day!");
+            btn.textContent = "Be Mine";
+          }else {
+            placeLetter(8, 9, "O");
+            placeLetter(8, 10, "U");
+            pratyushaScore = 10;
+            updateScoreDisplay();
+            addChatMessage("ScrabbleJudge", "Pratyusha played YOU. Now it's your turn.");
+            addChatMessage("ScrabbleBot", "I recommend you play \"WOOZY\" and take advantage of the TL square.");
+            playMyselfClickCount = 0;
+            recommendationVerb = "accept";
+            recommendationPhase = "WOOZY";
+            document.getElementById("play-myself-btn").classList.remove("hidden");
+            btn.textContent = "Accept ScrabbleBot's Recommendation";
+          }
+        }
+      };
+    })();
+  </script>
+</body>
+</html>
